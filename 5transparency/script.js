@@ -1,5 +1,5 @@
 const urlParams = new URLSearchParams(window.location.search)
-const WORLD_SIZE = urlParams.get("size")?.as(Number) || 500
+const WORLD_SIZE = urlParams.get("size")?.as(Number) || 1000
 const WORLD_WIDTH = WORLD_SIZE
 const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
@@ -38,19 +38,27 @@ const drawWorld = () => {
 
 const setPixel = (x, y, r, g, b, a) => {
 	const offset = y * WORLD_WIDTH * 4 + x * 4
-	imageData.data[offset] = r
-	imageData.data[offset+1] = g
-	imageData.data[offset+2] = b
+	const data = imageData.data
+	data[offset] = r
+	data[offset+1] = g
+	data[offset+2] = b
+	data[offset+3] = a
+}
+
+const setPixelTransparency = (x, y, a) => {
+	const offset = y * WORLD_WIDTH * 4 + x * 4
 	imageData.data[offset+3] = a
 }
 
 //=======//
 // World //
 //=======//
+let directionTick = true
+
 const makeElement = (colour, behave) => ({colour, behave})
 const ELEMENT_EMPTY = makeElement([0, 0, 0, 0])
 const ELEMENT_SAND = makeElement([254, 204, 70, 255], (origin) => {
-	const [x, y] = origin
+	const {x, y} = origin
 	const below = grid[x][y+1]
 	if (below?.element === ELEMENT_EMPTY) {
 		setSpace(below, ELEMENT_SAND)
@@ -58,6 +66,7 @@ const ELEMENT_SAND = makeElement([254, 204, 70, 255], (origin) => {
 		return
 	}
 	const direction = Random.oneIn(2)? 1 : -1
+	//directionTick = !directionTick
 	const slide = grid[x+direction]?.[y+1]
 	if (slide?.element === ELEMENT_EMPTY) {
 		setSpace(slide, ELEMENT_SAND)
@@ -68,7 +77,8 @@ const ELEMENT_SAND = makeElement([254, 204, 70, 255], (origin) => {
 
 const setSpace = (space, element) => {
 	space.element = element
-	setPixel(space.x, space.y, ...element.colour)
+	if (element === ELEMENT_SAND) setPixelTransparency(space.x, space.y, 255)
+	else setPixelTransparency(space.x, space.y, 0)
 }
 
 const makeSpace = (x, y) => ({x, y, element: ELEMENT_EMPTY})
@@ -80,7 +90,7 @@ for (let x = 0; x < WORLD_WIDTH; x++) {
 	for (let y = 0; y < WORLD_HEIGHT; y++) {
 		const space = makeSpace(x, y)
 		grid[x].push(space)
-		setSpace(space, ELEMENT_EMPTY)
+		setPixel(space.x, space.y, 254, 204, 70, 0)
 	}
 	for (let y = WORLD_HEIGHT-1; y >= 0; y--) {
 		world.push(grid[x][y])
@@ -97,7 +107,7 @@ const updateWorld = () => {
 //=========//
 // Dropper //
 //=========//
-let dropperSize = 2
+let dropperSize = 4
 let dropperElement = ELEMENT_SAND
 let dropperPreviousPosition = [undefined, undefined]
 
