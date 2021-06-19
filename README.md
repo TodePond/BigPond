@@ -1,2 +1,3 @@
 # BigPond
-more sand than you
+priority 1: more sand<br>
+priority 2: none
