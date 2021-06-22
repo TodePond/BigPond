@@ -1,19 +1,7 @@
 
-let c = {}
-
-const load = async () => {
-	const {instance} = await WebAssembly.instantiateStreaming(fetch("script.wasm"))
-	c = instance.exports
-	instance.d
-	main()
-}
-
-const main = () => {
-	c.setup()
-}
-
-load()
-
+//=======//
+// Setup //
+//=======//
 const urlParams = new URLSearchParams(window.location.search)
 const WORLD_SIZE = urlParams.get("size")?.as(Number) || 1000
 const WORLD_WIDTH = WORLD_SIZE
@@ -21,14 +9,30 @@ const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
 const SPEED = urlParams.get("speed")?.as(Number) || 4
 
-//=======//
-// Setup //
-//=======//
 const canvas = document.createElement("canvas")
 const context = canvas.getContext("2d")
 const imageData = context.createImageData(WORLD_SIZE, WORLD_SIZE)
 canvas.style["background-color"] = "rgb(45, 56, 77)"
 canvas.style["image-rendering"] = "pixelated"
+
+let c = {}
+let imageDataBuffer = undefined
+
+const load = async () => {
+	const response = await fetch("script.wasm")
+	const wasm = await response.arrayBuffer()
+	const {instance} = await WebAssembly.instantiate(wasm)
+	c = instance.exports
+	imageDataBuffer = getWasmGlobal("imageData", WORLD_AREA * 4)
+}
+
+const getWasmGlobal = (name, size) => {
+	const offset = c[name].d
+	return new Int32Array(c.memory.buffer, offset, size)
+}
+
+load()
+
 
 on.load(() => {
 	document.body.appendChild(canvas)
@@ -49,6 +53,8 @@ on.resize(() => {
 // Draw //
 //======//
 const drawWorld = () => {
+	if (!imageDataBuffer) return
+	imageData.data.set(imageDataBuffer)
 	context.putImageData(imageData, 0, 0)
 }
 
