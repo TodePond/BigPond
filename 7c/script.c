@@ -17,8 +17,15 @@ struct space {
 space world[WORLD_SIZE * WORLD_SIZE];
 int imageData[WORLD_SIZE * WORLD_SIZE * 4];
 
-int add(int a, int b) {
-	return a + b;
+void setup() {
+	for (int i = 0; i < WORLD_AREA; i++) {
+		
+	}
+}
+
+void setSpace(space *target, int element) {
+	target->element = element;
+
 }
 
 void getImageData(int *buffer) {
