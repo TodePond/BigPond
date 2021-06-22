@@ -18,7 +18,7 @@ canvas.style["image-rendering"] = "pixelated"
 let c = {}
 let imageDataBuffer = undefined
 
-const load = async () => {
+const loadWasm = async () => {
 	const response = await fetch("script.wasm")
 	const wasm = await response.arrayBuffer()
 	const {instance} = await WebAssembly.instantiate(wasm)
@@ -31,8 +31,7 @@ const getWasmGlobal = (name, size) => {
 	return new Int32Array(c.memory.buffer, offset, size)
 }
 
-load()
-
+loadWasm()
 
 on.load(() => {
 	document.body.appendChild(canvas)
