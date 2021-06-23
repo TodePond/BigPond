@@ -2,7 +2,7 @@
 #include <stdbool.h>
 
 #define WORLD_SIZE 1500
-#define SPEED 2
+#define SPEED 1
 int WORLD_AREA = WORLD_SIZE * WORLD_SIZE;
 int IMAGE_DATA_LENGTH = WORLD_SIZE * WORLD_SIZE * 4;
 
