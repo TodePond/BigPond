@@ -2,33 +2,35 @@
 //=======//
 // Setup //
 //=======//
-const urlParams = new URLSearchParams(window.location.search)
-const WORLD_SIZE = urlParams.get("size")?.as(Number) || 1000
+// These settings must be kept the same as in script.c !!!!!!
+const WORLD_SIZE =  1500
 const WORLD_WIDTH = WORLD_SIZE
 const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
-const SPEED = urlParams.get("speed")?.as(Number) || 4
 
 const canvas = document.createElement("canvas")
 const context = canvas.getContext("2d")
-const imageData = context.createImageData(WORLD_SIZE, WORLD_SIZE)
 canvas.style["background-color"] = "rgb(45, 56, 77)"
-canvas.style["image-rendering"] = "pixelated"
+//canvas.style["image-rendering"] = "pixelated"
 
 let c = {}
+let imageData = undefined
 let imageDataBuffer = undefined
 
 const loadWasm = async () => {
 	const response = await fetch("script.wasm")
 	const wasm = await response.arrayBuffer()
-	const {instance} = await WebAssembly.instantiate(wasm)
+	const {instance} = await WebAssembly.instantiate(wasm, {env: {print}})
 	c = instance.exports
-	imageDataBuffer = getWasmGlobal("imageData", WORLD_AREA * 4)
+	imageDataBuffer = getWasmGlobal("imageData", {length: WORLD_AREA * 4, type: Uint8ClampedArray})
+	imageData = new ImageData(imageDataBuffer, WORLD_SIZE, WORLD_SIZE)
+	c.setup()
+	tick()
 }
 
-const getWasmGlobal = (name, size) => {
-	const offset = c[name].d
-	return new Int32Array(c.memory.buffer, offset, size)
+const getWasmGlobal = (name, {length=1, type=Int32Array}) => {
+	const offset = c[name]
+	return new type(c.memory.buffer, offset, length)
 }
 
 loadWasm()
@@ -45,6 +47,7 @@ on.resize(() => {
 	canvas.height = WORLD_SIZE
 	//canvas.style["width"] = innerWidth + "px"
 	//canvas.style["height"] = innerHeight + "px"
+	c.redrawWorld?.()
 	drawWorld()
 })
 
@@ -52,8 +55,7 @@ on.resize(() => {
 // Draw //
 //======//
 const drawWorld = () => {
-	if (!imageDataBuffer) return
-	imageData.data.set(imageDataBuffer)
+	if (!imageData) return
 	context.putImageData(imageData, 0, 0)
 }
 
@@ -79,7 +81,7 @@ const setPixelIdTransparency = (id, a) => {
 //=======//
 // World //
 //=======//
-let directionTick = true
+/*let directionTick = true
 
 const makeElement = (colour, behave) => ({colour, behave})
 const ELEMENT_EMPTY = makeElement([0, 0, 0, 0])
@@ -107,9 +109,9 @@ const ELEMENT_SAND = makeElement([254, 204, 70, 255], (origin) => {
 		setSpace(origin, ELEMENT_EMPTY)
 		return
 	}
-})
+})*/
 
-const setSpace = (space, element) => {
+/*const setSpace = (space, element) => {
 	space.element = element
 	if (element === ELEMENT_SAND) setPixelIdTransparency(space.id, 255)
 	else setPixelIdTransparency(space.id, 0)
@@ -123,19 +125,19 @@ const makeSpace = (x, y) => ({
 	below: undefined,
 	slideLeft: undefined,
 	slideRight: undefined
-})
+})*/
 
-const world = []
+/*const world = []
 const worldReversed = []
-const grid = []
+const grid = []*/
 
 // Make the grid
-for (let x = 0; x < WORLD_WIDTH; x++) {
+/*for (let x = 0; x < WORLD_WIDTH; x++) {
 	grid.push([])
 	for (let y = 0; y < WORLD_HEIGHT; y++) {
 		const space = makeSpace(x, y)
 		grid[x].push(space)
-		setPixel(space.x, space.y, 254, 204, 70, 0)
+		//setPixel(space.x, space.y, 254, 204, 70, 0)
 	}
 
 	for (let y = WORLD_HEIGHT-1; y >= 0; y--) {
@@ -149,7 +151,7 @@ for (let x = WORLD_WIDTH-1; x >= 0; x--) {
 		worldReversed.push(grid[x][y])
 	}
 	
-}
+}*/
 
 // Make the big space array
 //for (let y = WORLD_HEIGHT-1; y >= 0; y--) {
@@ -164,7 +166,7 @@ for (let x = WORLD_WIDTH-1; x >= 0; x--) {
 const worldReversed = world.clone.reverse()*/
 
 // Link neighbours
-for (let x = 0; x < WORLD_WIDTH; x++) {
+/*for (let x = 0; x < WORLD_WIDTH; x++) {
 	grid.push([])
 	for (let y = 0; y < WORLD_HEIGHT; y++) {
 		const space = grid[x][y]
@@ -172,9 +174,9 @@ for (let x = 0; x < WORLD_WIDTH; x++) {
 		space.slideRight = grid[x+1]?.[y+1]
 		space.slideLeft = grid[x-1]?.[y+1]
 	}
-}
+}*/
 
-let tickTock = true
+/*let tickTock = true
 const updateWorld = () => {
 	for (let i = 0; i < SPEED; i++) {
 		if (tickTock) {
@@ -189,13 +191,13 @@ const updateWorld = () => {
 		}
 		//tickTock = !tickTock
 	}
-}
+}*/
 
 //=========//
 // Dropper //
 //=========//
 let dropperSize = 4
-let dropperElement = ELEMENT_SAND
+//let dropperElement = 1
 let dropperPreviousPosition = [undefined, undefined]
 
 on.keydown(e => {
@@ -207,10 +209,7 @@ on.keydown(e => {
 const drop = (dx, dy) => {
 	for (let x = dx - dropperSize; x <= dx + dropperSize; x++) {
 		for (let y = dy - dropperSize; y <= dy + dropperSize; y++) {
-			const space = grid[x]?.[y]
-			if (space) {
-				setSpace(space, ELEMENT_SAND)
-			}
+			c.setSpaceByPosition(x, y, 1)
 		}
 	}
 }
@@ -257,12 +256,9 @@ const updateDropper = () => {
 // Tick //
 //======//
 const tick = () => {
-	updateWorld()
+	c.updateWorld()
 	updateDropper()
 	drawWorld()
 	requestAnimationFrame(tick)
 }
-
-
-tick()
 
