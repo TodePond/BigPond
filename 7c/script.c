@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define WORLD_SIZE 1500
+#define WORLD_SIZE 2000
 #define SPEED 1
 int WORLD_AREA = WORLD_SIZE * WORLD_SIZE;
 int IMAGE_DATA_LENGTH = WORLD_SIZE * WORLD_SIZE * 4;
@@ -38,7 +38,25 @@ Space *getSpaceFromPosition(int x, int y) {
 	return &world[id];
 }
 
+
+// https://stackoverflow.com/questions/52514296/simplest-random-number-generator-without-c-library
+static unsigned int g_seed;
+
+// Used to seed the generator.           
+void fast_srand(int seed) {
+	g_seed = seed;
+}
+
+// Compute a pseudorandom integer.
+// Output value in range [0, 32767]
+int fast_rand(void) {
+	g_seed = (214013*g_seed+2531011);
+	return (g_seed>>16)&0x7FFF;
+}
+
 void setup() {
+	fast_srand(0);
+
 	// Set ids and offset
 	for (int x = 0; x < WORLD_SIZE; x++) {
 		for (int y = 0; y < WORLD_SIZE; y++) {
@@ -58,6 +76,8 @@ void setup() {
 			int id = getIdFromPosition(x, y);
 			Space *space = &world[id];
 			space->below = getSpaceFromPosition(x, y+1);
+			space->slideRight = getSpaceFromPosition(x+1, y+1);
+			space->slideLeft = getSpaceFromPosition(x-1, y+1);
 		}
 	}
 }
@@ -91,10 +111,20 @@ void updateWorld() {
 	for (int t = 0; t < SPEED; t++) for (int id = WORLD_AREA-1; id >= 0; id--) {
 		Space *space = &world[id];
 		if (space->element) {
-			if (!space->below->element) {
-				setSpace(space->below, true);
+			Space *below = space->below;
+			if (!below->element) {
+				setSpace(below, true);
 				setSpace(space, false);
+				continue;
+			}
+			bool direction = fast_rand() & 1;
+			Space *slideRight = direction? space->slideRight : space->slideLeft;
+			if (!slideRight->element) {
+				setSpace(slideRight, true);
+				setSpace(space, false);
+				continue;
 			}
 		}
 	}
+	//direction = !direction;
 }

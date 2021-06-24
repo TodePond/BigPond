@@ -3,7 +3,7 @@
 // Setup //
 //=======//
 // These settings must be kept the same as in script.c !!!!!!
-const WORLD_SIZE =  1500
+const WORLD_SIZE =  2000
 const WORLD_WIDTH = WORLD_SIZE
 const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
@@ -11,7 +11,7 @@ const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
 const canvas = document.createElement("canvas")
 const context = canvas.getContext("2d")
 canvas.style["background-color"] = "rgb(45, 56, 77)"
-//canvas.style["image-rendering"] = "pixelated"
+canvas.style["image-rendering"] = "pixelated"
 
 let c = {}
 let imageData = undefined
@@ -47,7 +47,7 @@ on.resize(() => {
 	canvas.height = WORLD_SIZE
 	//canvas.style["width"] = innerWidth + "px"
 	//canvas.style["height"] = innerHeight + "px"
-	c.redrawWorld?.()
+	//c.redrawWorld?.()
 	drawWorld()
 })
 
@@ -216,7 +216,8 @@ const drop = (dx, dy) => {
 
 const updateDropper = () => {
 	if (Mouse.Left) {
-		const [mx, my] = Mouse.position
+		const [sx, sy] = Mouse.position
+		const [mx, my] = [sx + scrollX, sy + scrollY]
 		if (mx >= WORLD_WIDTH || my >= WORLD_HEIGHT || mx < 0 || my < 0) {
 			dropperPreviousPosition = [undefined, undefined]
 			return
