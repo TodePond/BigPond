@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define WORLD_SIZE 2000
+#define WORLD_SIZE 1500
 #define SPEED 1
 int WORLD_AREA = WORLD_SIZE * WORLD_SIZE;
 int IMAGE_DATA_LENGTH = WORLD_SIZE * WORLD_SIZE * 4;
@@ -24,13 +24,18 @@ struct Space {
 Space world[WORLD_SIZE * WORLD_SIZE];
 uint8_t imageData[WORLD_SIZE * WORLD_SIZE * 4];
 
-
 int getIdFromPosition(int x, int y) {
 	if (x >= WORLD_SIZE) return -1;
 	if (y >= WORLD_SIZE) return -1;
 	if (x < 0) return -1;
 	if (y < 0) return -1;
-	return y * WORLD_SIZE + x;
+	int xOffset = y % 2 == 0? x : (WORLD_SIZE - x);
+	return y * WORLD_SIZE + xOffset;
+}
+
+int getOffsetFromPosition(int x, int y) {
+	int baseOffset = y * WORLD_SIZE + x;
+	return baseOffset*4 + 3;
 }
 
 Space *getSpaceFromPosition(int x, int y) {
@@ -62,22 +67,15 @@ void setup() {
 		for (int y = 0; y < WORLD_SIZE; y++) {
 			int id = getIdFromPosition(x, y);
 			Space *space = &world[id];
-			//space->id = id;
-			space->offset = id*4 + 3;
-			imageData[space->offset - 3] = (uint8_t) 254;
-			imageData[space->offset - 2] = (uint8_t) 204;
-			imageData[space->offset - 1] = (uint8_t) 70;
-		}
-	}
-
-	// Link neighbours
-	for (int x = 0; x < WORLD_SIZE; x++) {
-		for (int y = 0; y < WORLD_SIZE; y++) {
-			int id = getIdFromPosition(x, y);
-			Space *space = &world[id];
+			
+			space->offset = getOffsetFromPosition(x, y);
 			space->below = getSpaceFromPosition(x, y+1);
 			space->slideRight = getSpaceFromPosition(x+1, y+1);
 			space->slideLeft = getSpaceFromPosition(x-1, y+1);
+
+			imageData[space->offset - 3] = (uint8_t) 254;
+			imageData[space->offset - 2] = (uint8_t) 204;
+			imageData[space->offset - 1] = (uint8_t) 70;
 		}
 	}
 }
@@ -107,8 +105,10 @@ void redrawWorld() {
 	}
 }
 
+//bool direction = true;
 void updateWorld() {
-	for (int t = 0; t < SPEED; t++) for (int id = WORLD_AREA-1; id >= 0; id--) {
+	for (int id = WORLD_AREA-1; id >= 0; id--) {
+		//direction = !direction;
 		Space *space = &world[id];
 		if (space->element) {
 			Space *below = space->below;
@@ -118,7 +118,7 @@ void updateWorld() {
 				continue;
 			}
 			bool direction = fast_rand() & 1;
-			Space *slideRight = direction? space->slideRight : space->slideLeft;
+			Space *slideRight = direction? space->slideLeft : space->slideRight;
 			if (!slideRight->element) {
 				setSpace(slideRight, true);
 				setSpace(space, false);

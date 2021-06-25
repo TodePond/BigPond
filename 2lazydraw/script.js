@@ -167,5 +167,5 @@ const tick = () => {
 }
 
 
-tick()
+requestAnimationFrame(tick, 1000 / 60)
 

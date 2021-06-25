@@ -1,9 +1,9 @@
 const urlParams = new URLSearchParams(window.location.search)
-const WORLD_SIZE = urlParams.get("size")?.as(Number) || 1000
+const WORLD_SIZE = urlParams.get("size")?.as(Number) || 1200
 const WORLD_WIDTH = WORLD_SIZE
 const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
-const SPEED = urlParams.get("speed")?.as(Number) || 4
+const SPEED = urlParams.get("speed")?.as(Number) || 1
 
 //=======//
 // Setup //

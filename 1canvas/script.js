@@ -156,8 +156,9 @@ const tick = () => {
 	updateWorld()
 	drawWorld()
 	requestAnimationFrame(tick)
+	//setTimeout(tick, 1000 / 60)
 }
 
-
 tick()
+//requestAnimationFrame(() => setInterval(tick, 1000 / 60))
 

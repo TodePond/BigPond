@@ -50,7 +50,7 @@ const setPixel = (x, y, r, g, b, a) => {
 const makeElement = (colour, behave) => ({colour, behave})
 const ELEMENT_EMPTY = makeElement([0, 0, 0, 0])
 const ELEMENT_SAND = makeElement([254, 204, 70, 255], (origin) => {
-	const [x, y] = origin
+	const {x, y} = origin
 	const below = grid[x][y+1]
 	if (below?.element === ELEMENT_EMPTY) {
 		setSpace(below, ELEMENT_SAND)
@@ -167,5 +167,5 @@ const tick = () => {
 }
 
 
-tick()
+requestAnimationFrame(tick, 1000 / 60)
 
