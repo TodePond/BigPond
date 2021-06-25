@@ -1,7 +1,7 @@
 const urlParams = new URLSearchParams(window.location.search)
 
 const WORLD_WIDTH_PARAM = urlParams.get("w")
-const WORLD_WIDTH = WORLD_WIDTH_PARAM !== null? WORLD_WIDTH_PARAM.as(Number) : 300
+const WORLD_WIDTH = WORLD_WIDTH_PARAM !== null? WORLD_WIDTH_PARAM.as(Number) : 3000
 //const WORLD_WIDTH = 16384
 const SPACE_COUNT = WORLD_WIDTH * WORLD_WIDTH
 
@@ -15,7 +15,7 @@ const EVENT_CHANCE = 0.05
 const EVENTS_NEEDED_FOR_COVERAGE = EVENT_WINDOW == 1? 1 : 1 / EVENT_CHANCE
 
 const EVENTS_PER_FRAME_PARAM = urlParams.get("f")
-const EVENTS_PER_FRAME = EVENTS_PER_FRAME_PARAM !== null? EVENTS_PER_FRAME_PARAM.as(Number) : 12
+const EVENTS_PER_FRAME = EVENTS_PER_FRAME_PARAM !== null? EVENTS_PER_FRAME_PARAM.as(Number) : 6
 const EVENT_CYCLE_COUNT = Math.round(EVENTS_PER_FRAME)
 
 let PAN_POSITION_X = 0
@@ -107,6 +107,8 @@ const makeCanvas = () => {
 		position: absolute;
 		left: 0px;
 		top:0px;
+		/*image-rendering: pixelated;
+		image-rendering: crisp-edges;*/
 	`
 	const canvas = HTML `<canvas style="${style}"></canvas>`
 	return canvas
@@ -347,57 +349,23 @@ const fragmentShaderSource = `#version 300 es
 		vec2 space = ew(x, y);
 		return getPickedScoreOfSpace(space);
 	}
-	
-	// hot function
-	bool isPickedAndBest(float x, float y) {
+
+	bool isPicked(float x, float y) {
 		
 		vec2 space = ew(x, y);
+
+		float modd = (mod(u_time, 2.0) < 1.0)? 1.0 : -1.0;
+
+		if (mod((space.x * ${WORLD_WIDTH}.0) + u_time * modd, 3.0) < 1.0) {
+			if (mod(((space.y * ${WORLD_WIDTH}.0) + u_time), 2.0) < 1.0) {
+				return true;
+			}
+		}
 		
-		float score = getPickedScoreOfSpace(space);
-		
-		float x1 = x + 1.0;
-		float x_1 = x - 1.0;
-		float y1 = y + 1.0;
-		float y_1 = y - 1.0;
-		
-		// 1 space away
-		if (score >= getPickedScore(x1, y)) return false;
-		if (score >= getPickedScore(x1, y1)) return false;
-		if (score >= getPickedScore(x, y1)) return false;
-		if (score >= getPickedScore(x_1, y1)) return false;
-		if (score >= getPickedScore(x_1, y)) return false;
-		if (score >= getPickedScore(x_1, y_1)) return false;
-		if (score >= getPickedScore(x, y_1)) return false;
-		if (score >= getPickedScore(x1, y_1)) return false;
-		
-		// 2 spaces away
-		float x2 = x + 2.0;
-		float x_2 = x - 2.0;
-		float y2 = y + 2.0;
-		float y_2 = y - 2.0;
-		
-		if (score >= getPickedScore(x_2, y2)) return false;
-		if (score >= getPickedScore(x_1, y2)) return false;
-		if (score >= getPickedScore(x, y2)) return false;
-		if (score >= getPickedScore(x1, y2)) return false;
-		if (score >= getPickedScore(x2, y2)) return false;
-		
-		if (score >= getPickedScore(x_2, y_2)) return false;
-		if (score >= getPickedScore(x_1, y_2)) return false;
-		if (score >= getPickedScore(x, y_2)) return false;
-		if (score >= getPickedScore(x1, y_2)) return false;
-		if (score >= getPickedScore(x2, y_2)) return false;
-		
-		if (score >= getPickedScore(x_2, y1)) return false;
-		if (score >= getPickedScore(x_2, y)) return false;
-		if (score >= getPickedScore(x_2, y_1)) return false;
-		
-		if (score >= getPickedScore(x2, y1)) return false;
-		if (score >= getPickedScore(x2, y)) return false;
-		if (score >= getPickedScore(x2, y1)) return false;
-		
-		return true;
+		return false;
 	}
+	
+	
 	
 	
 	
@@ -406,70 +374,17 @@ const fragmentShaderSource = `#version 300 es
 	const int BELOW = 2;
 	const int BELOW_RIGHT = 3;
 	const int BELOW_LEFT = 4;
-	const int RIGHT = 5;
-	const int LEFT = 6;
-	const int ABOVE = 7;
 	
-	/*float score00;
-	
-	float score_11;
-	float score01;
-	float score11;
-	float score_10;
-	float score10;
-	float score_1_1;
-	float score0_1;
-	float score1_1;
-	
-	float score_22;
-	float score_12;
-	float score02;
-	float score12;
-	float score22;
-	
-	float score_2_2;
-	float score_1_2;
-	float score0_2;
-	float score1_2;
-	float score2_2;
-	
-	float score_21;
-	float score_20;
-	float score_2_1;
-	
-	float score21;
-	float score20;
-	float score2_1;*/
 	
 	int getMySite() {
 	
-		vec2 space00 = ew(0.0, 0.0);
-		float score00 = getPickedScoreOfSpace(space00);
-		
-		// Am I an origin?
-		if (isPickedAndBest(0.0, 0.0)) return ORIGIN;
-		if (isPickedAndBest(0.0, 1.0)) return BELOW;
-		if (isPickedAndBest(-1.0, 0.0)) return RIGHT;
-		if (isPickedAndBest(1.0, 0.0)) return LEFT;
-		if (isPickedAndBest(0.0, -1.0)) return ABOVE;
-		if (isPickedAndBest(-1.0, 1.0)) return BELOW_RIGHT;
-		if (isPickedAndBest(1.0, 1.0)) return BELOW_LEFT;
+		if (isPicked(0.0, 0.0)) return ORIGIN;
+		if (isPicked(0.0, 1.0)) return BELOW;
+		if (isPicked(-1.0, 1.0)) return BELOW_RIGHT;
+		if (isPicked(1.0, 1.0)) return BELOW_LEFT;
 		return 0;
 	}
-	
-	// only used for debug vis
-	bool isPickedInWindow(float x, float y) {
-		if (isPickedAndBest(1.0, 0.0)) return true;
-		if (isPickedAndBest(1.0, 1.0)) return true;
-		if (isPickedAndBest(0.0, 1.0)) return true;
-		if (isPickedAndBest(-1.0, 1.0)) return true;
-		if (isPickedAndBest(-1.0, 0.0)) return true;
-		if (isPickedAndBest(-1.0, -1.0)) return true;
-		if (isPickedAndBest(0.0, -1.0)) return true;
-		if (isPickedAndBest(1.0, -1.0)) return true;
-		return false;
-	}
-	
+
 	const vec4 WHITE = vec4(224.0 / 255.0, 224.0 / 255.0, 224.0 / 255.0, 1.0);
 	const vec4 BLANK = vec4(0.0, 0.0, 0.0, 0.0);
 	const vec4 RED = vec4(1.0, 70.0 / 255.0, 70.0 / 255.0, 1.0);
@@ -638,139 +553,79 @@ const fragmentShaderSource = `#version 300 es
 		//=========================//
 		vec4 elementOrigin;
 		vec4 elementBelow;
-		vec4 elementLeft;
-		vec4 elementRight;
 		vec4 elementBelowRight;
 		vec4 elementBelowLeft;
-		vec4 elementAbove;
 		
 		if (site == ORIGIN) {
 			elementOrigin = getColour(0.0, 0.0);
 			elementBelow = getColour(0.0, -1.0);
-			elementAbove = getColour(0.0, 1.0);
 			elementBelowRight = getColour(1.0, -1.0);
 			elementBelowLeft = getColour(-1.0, -1.0);
-			
-			elementLeft = getColour(-1.0, 0.0);
-			elementRight = getColour(1.0, 0.0);
 		}
 		else if (site == BELOW) {
 			elementOrigin = getColour(0.0, 1.0);
 			elementBelow = getColour(0.0, 0.0);
-			elementAbove = getColour(0.0, 2.0);
 			elementBelowRight = getColour(1.0, 0.0);
 			elementBelowLeft = getColour(-1.0, 0.0);
-			
-			elementLeft = getColour(-1.0, 1.0);
-			elementRight = getColour(1.0, 1.0);
 		}
 		else if (site == BELOW_RIGHT) {
 			elementOrigin = getColour(-1.0, 1.0);
 			elementBelow = getColour(-1.0, 0.0);
-			elementAbove = getColour(-1.0, 2.0);
 			elementBelowRight = getColour(0.0, 0.0);
 			elementBelowLeft = getColour(-2.0, 0.0);
-			
-			elementLeft = getColour(-2.0, 1.0);
-			elementRight = getColour(0.0, 1.0);
 		}
 		else if (site == BELOW_LEFT) {
 			elementOrigin = getColour(1.0, 1.0);
 			elementBelow = getColour(1.0, 0.0);
-			elementAbove = getColour(1.0, 2.0);
 			elementBelowRight = getColour(2.0, 0.0);
 			elementBelowLeft = getColour(0.0, 0.0);
-			
-			elementLeft = getColour(0.0, 1.0);
-			elementRight = getColour(2.0, 1.0);
-		}
-		else if (site == RIGHT) {
-			elementOrigin = getColour(-1.0, 0.0);
-			elementBelow = getColour(-1.0, -1.0);
-			elementAbove = getColour(-1.0, 1.0);
-			elementBelowRight = getColour(0.0, -1.0);
-			elementBelowLeft = getColour(-2.0, -1.0);
-			
-			elementLeft = getColour(-2.0, 0.0);
-			elementRight = getColour(0.0, 0.0);
-		}
-		else if (site == LEFT) {
-			elementOrigin = getColour(1.0, 0.0);
-			elementBelow = getColour(1.0, -1.0);
-			elementAbove = getColour(1.0, 1.0);
-			elementBelowRight = getColour(2.0, -1.0);
-			elementBelowLeft = getColour(0.0, -1.0);
-			
-			elementLeft = getColour(0.0, 0.0);
-			elementRight = getColour(2.0, 0.0);
-		}
-		else if (site == ABOVE) {
-			elementOrigin = getColour(0.0, -1.0);
-			elementBelow = getColour(0.0, -2.0);
-			elementAbove = getColour(0.0, 0.0);
-			elementBelowRight = getColour(1.0, -2.0);
-			elementBelowLeft = getColour(-1.0, -2.0);
-			
-			elementLeft = getColour(-1.0, -1.0);
-			elementRight = getColour(1.0, -1.0);
-		}
-		
-		if (elementOrigin == EMPTY) {
-			
-		}
-		
-		//==========================//
-		// How do I behave? - WATER //
-		//==========================//
-		else if (isElement(elementOrigin, WATER)) {
-			// Fall
-			if (elementBelow == EMPTY) {
-				elementOrigin = EMPTY;
-				elementBelow = WATER;
-			}
-			
-			else if (elementLeft == EMPTY) {
-				elementOrigin = EMPTY;
-				elementLeft = WATER;
-			}
-			
-			else if (elementRight == EMPTY) {
-				elementOrigin = EMPTY;
-				elementRight = WATER;
-			}
-		}
-		
-		//=============================//
-		// How do I behave? - FORKBOMB //
-		//=============================//
-		else if (elementOrigin == FORKBOMB) {
-			if (elementBelow == EMPTY) elementBelow = FORKBOMB;
-			if (elementLeft == EMPTY) elementLeft = FORKBOMB;
-			if (elementRight == EMPTY) elementRight = FORKBOMB;
-			if (elementAbove == EMPTY) elementAbove = FORKBOMB;
 		}
 		
 		//=========================//
 		// How do I behave? - SAND //
 		//=========================//
-		else if (elementOrigin == SAND) {
+		if (elementOrigin == SAND) {
 			// Fall
-			if (elementBelow == EMPTY || isElement(elementBelow, WATER)) {
+			if (elementBelow == EMPTY) {
 				elementOrigin = elementBelow;
 				elementBelow = SAND;
 			}
-			
-			// Slide Right
-			else if (elementBelowRight == EMPTY || isElement(elementBelowRight, WATER)) {
-				elementOrigin = elementBelowRight;
-				elementBelowRight = SAND;
+
+			// Slide
+			else if (site != BELOW) {
+
+				vec2 randoSeed;
+				if (site == ORIGIN) randoSeed = ew(0.0, 0.0);
+				else if (site == BELOW_LEFT) randoSeed = ew(1.0, 1.0);
+				else if (site == BELOW_RIGHT) randoSeed = ew(-1.0, 1.0);
+
+				float rando = random(randoSeed / (u_seed + 1.0));
+
+				// Slide Right
+				if (rando > 0.5) {
+					if (elementBelowRight == EMPTY) {
+						elementOrigin = elementBelowRight;
+						elementBelowRight = SAND;
+					}
+					else if (elementBelowLeft == EMPTY) {
+						elementOrigin = elementBelowLeft;
+						elementBelowLeft = SAND;
+					}
+
+				}
+
+				// Slide Left
+				else if (elementBelowLeft == EMPTY) {
+					elementOrigin = elementBelowLeft;
+					elementBelowLeft = SAND;
+				}
+				else if (elementBelowRight == EMPTY) {
+					elementOrigin = elementBelowRight;
+					elementBelowRight = SAND;
+				}
 			}
 			
-			// Slide Left
-			else if (elementBelowLeft == EMPTY || isElement(elementBelowLeft, WATER)) {
-				elementOrigin = elementBelowLeft;
-				elementBelowLeft = SAND;
-			}
+			
 		}
 		
 		//================//
@@ -790,18 +645,6 @@ const fragmentShaderSource = `#version 300 es
 		}
 		if (site == BELOW_LEFT) {
 			colour = elementBelowLeft;
-			return;
-		}
-		if (site == RIGHT) {
-			colour = elementRight;
-			return;
-		}
-		if (site == LEFT) {
-			colour = elementLeft;
-			return;
-		}
-		if (site == ABOVE) {
-			colour = elementAbove;
 			return;
 		}
 		
@@ -941,7 +784,7 @@ if (RANDOM_SPAWN !== 0) for (let i = 0; i < spaces.length; i += 4) {
 	}
 }
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WORLD_WIDTH, WORLD_WIDTH, 0, gl.RGBA, gl.UNSIGNED_BYTE, spaces)
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST )
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -1045,12 +888,13 @@ const draw = async () => {
 	
 	for (let i = 0; i < EVENT_CYCLE_COUNT; i++) {
 	
-		//time++
 		seed += SEED_STEP
 		if (seed > 1.0) seed = SEED_STEP
-		//while (time >= 18) time -= 18
-		//gl.uniform1f(timeLocation, time)
 		gl.uniform1f(seedLocation, seed)
+		
+		time++
+		//if (time >= 9) time = 0
+		gl.uniform1f(timeLocation, time)
 		gl.uniform1f(eventTimeLocation, i)
 	
 		if (currentDirection === true && !paused) {
