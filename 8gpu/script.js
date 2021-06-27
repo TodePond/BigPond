@@ -356,7 +356,7 @@ const fragmentShaderSource = `#version 300 es
 
 		float modd = (mod(u_time, 2.0) < 1.0)? 1.0 : -1.0;
 
-		if (mod((space.x * ${WORLD_WIDTH}.0) + u_time * modd, 3.0) < 1.0) {
+		if (mod((space.x * ${WORLD_WIDTH}.0) + u_time, 3.0) < 1.0) {
 			if (mod(((space.y * ${WORLD_WIDTH}.0) + u_time), 2.0) < 1.0) {
 				return true;
 			}
@@ -840,6 +840,14 @@ let time = 0
 const SEED_STEP = 0.0001
 let seed = SEED_STEP
 
+Habitat.Random.install(this)
+
+let t = 0
+const times = new Uint8Array([
+	0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0
+])
+const timesLength = times.length
+
 let previousMouseX = 0
 let previousMouseY = 0
 const draw = async () => {
@@ -892,8 +900,11 @@ const draw = async () => {
 		if (seed > 1.0) seed = SEED_STEP
 		gl.uniform1f(seedLocation, seed)
 		
-		time++
+		//time++
 		//if (time >= 9) time = 0
+		t++ 
+		if (t >= timesLength) t = 0
+		time = times[t]
 		gl.uniform1f(timeLocation, time)
 		gl.uniform1f(eventTimeLocation, i)
 	
