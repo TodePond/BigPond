@@ -150,9 +150,12 @@ const drop = (dx, dy) => {
 	}
 }
 
+on.touchmove(e => e.preventDefault(), {passive: false})
+
 const updateDropper = () => {
-	if (Mouse.Left) {
-		const [mx, my] = Mouse.position
+	if (Mouse.Left || Touches.length > 0) {
+		const cursor = Touches.length > 0? Touches[0] : Mouse
+		const [mx, my] = cursor.position
 		if (mx >= WORLD_WIDTH || my >= WORLD_HEIGHT || mx < 0 || my < 0) {
 			dropperPreviousPosition = [undefined, undefined]
 			return
