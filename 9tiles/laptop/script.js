@@ -51,6 +51,12 @@ on.resize(() => {
 	drawWorld()
 })
 
+//============//
+// Web Socket //
+//============//
+const socket = new WebSocket("ws://localhost:8000/ws")
+//on.mousedown(() => socket.send("HIII"))
+
 //======//
 // Draw //
 //======//
