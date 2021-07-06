@@ -7,12 +7,18 @@ int WORLD_AREA = WORLD_SIZE * WORLD_SIZE;
 int IMAGE_DATA_LENGTH = WORLD_SIZE * WORLD_SIZE * 4;
 
 void print(int message);
+void offerSand(int x);
 
 typedef struct Space Space;
 struct Space {
 
 	// Used for setting image data	
 	int offset;
+
+	// Used for transmitting sand to next tile
+	int x;
+	bool isBottom;
+	bool isOffered;
 
 	// Used for processing behaviour
 	bool element;
@@ -70,6 +76,8 @@ void setup() {
 			
 			space->offset = getOffsetFromPosition(x, y);
 			space->below = getSpaceFromPosition(x, y+1);
+			space->x = x;
+			space->isBottom = y == WORLD_SIZE-1;
 			space->slideRight = getSpaceFromPosition(x+1, y+1);
 			space->slideLeft = getSpaceFromPosition(x-1, y+1);
 
@@ -111,6 +119,11 @@ void updateWorld() {
 		//direction = !direction;
 		Space *space = &world[id];
 		if (space->element) {
+			if (space->isBottom) {
+				offerSand(space->x);
+				space->isOffered = true;
+				continue;
+			}
 			Space *below = space->below;
 			if (!below->element) {
 				setSpace(below, true);

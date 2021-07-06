@@ -1,29 +1,52 @@
-import {serve} from "https://deno.land/std/http/server.ts"
-import {acceptWebSocket, acceptable} from "https://deno.land/std/ws/mod.ts"
-const s = serve({port: 8080})
+import { WebSocketServer } from "https://deno.land/x/websocket@v0.1.1/mod.ts";
 
-//https://blog.logrocket.com/using-websockets-with-deno/
-//https://www.youtube.com/watch?v=Cb8zho9HDbk
-console.log("%cTile Server Running on port 8080", "color: rgb(0, 128, 255)")
+let laptop
+let desktop
+let phone
 
-const sockets = []
+const LAPTOP_SIZE = 1500
+const DESKTOP_SIZE = 3000
+const PHONE_SIZE = 1500
 
-const connection = async (socket) => {
-	console.log("%cConnected to client", "color: rgb(0, 255, 128)")
-	sockets.push(socket)
+const wss = new WebSocketServer(8080);
+wss.on("connection", (ws) => {
 
-	for await (ev of socket) {
-		console.log(ev)
-	}
-}
+	ws.on("message", (message) => {
 
-for await (const req of s) {
-	if (acceptable(req)) {
-		acceptWebSocket({
-			conn: req.conn,
-			bufReader: req.r,
-			bufWriter: req.w,
-			headers: req.headers,
-		}).then(connection)
-	}
-}
+		if (ws === laptop) {
+			if (message.offer !== undefined) {
+
+			}
+		}
+
+		if (message === "LAPTOP") {
+			if (laptop) {
+				console.log("%cClosing old laptop connection", "color: rgb(255, 70, 70)")
+				laptop.close()
+			}
+			console.log("%cLaptop Connected", "color: rgb(70, 255, 128)")
+			laptop = ws
+			return
+		}
+		if (message === "DESKTOP") {
+			if (desktop) {
+				console.log("%cClosing old desktop connection", "color: rgb(255, 70, 70)")
+				desktop.close()
+			}
+			console.log("%cDesktop Connected", "color: rgb(70, 255, 128)")
+			desktop = ws
+			return
+		}
+		if (message === "PHONE") {
+			if (phone) {
+				console.log("%cClosing old phone connection", "color: rgb(255, 70, 70)")
+				phone.close()
+			}
+			console.log("%cPhone Connected", "color: rgb(70, 255, 128)")
+			phone = ws
+			return
+		}
+		//console.log(message);
+		//ws.send(message)
+	})
+})

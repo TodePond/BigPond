@@ -26,10 +26,12 @@ const BG_COLOUR = new THREE.Color()
 BG_COLOUR.setRGB(13 / 255, 16 / 255, 23 / 255)
 //BG_COLOUR.setHSL(Math.random(), 1, 0.92)
 
+const socket = new WebSocket(`ws://${location.hostname}:8080`)
+socket.onopen = () => socket.send("DESKTOP")
+
 //======//
 // Menu //
 //======//
-
 const MENU_WIDTH = 90
 const makeMenu = () => {
 	const style = `
@@ -851,6 +853,7 @@ const timesLength = times.length
 
 let previousMouseX = 0
 let previousMouseY = 0
+
 const draw = async () => {
 	
 	previousDown = dropperDown
@@ -915,6 +918,7 @@ const draw = async () => {
 			targetTexture = texture2
 			targetFrameBuffer = fb1
 			if (!paused) currentDirection = false
+
 		}
 		else {
 			sourceTexture = texture2

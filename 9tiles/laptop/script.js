@@ -17,10 +17,14 @@ let c = {}
 let imageData = undefined
 let imageDataBuffer = undefined
 
+const offerSand = (x) => {
+	socket.send({offer: x})
+}
+
 const loadWasm = async () => {
 	const response = await fetch("script.wasm")
 	const wasm = await response.arrayBuffer()
-	const {instance} = await WebAssembly.instantiate(wasm, {env: {print}})
+	const {instance} = await WebAssembly.instantiate(wasm, {env: {print, offerSand}})
 	c = instance.exports
 	imageDataBuffer = getWasmGlobal("imageData", {length: WORLD_AREA * 4, type: Uint8ClampedArray})
 	imageData = new ImageData(imageDataBuffer, WORLD_SIZE, WORLD_SIZE)
@@ -54,8 +58,9 @@ on.resize(() => {
 //============//
 // Web Socket //
 //============//
-const socket = new WebSocket("ws://localhost:8000/ws")
-//on.mousedown(() => socket.send("HIII"))
+
+const socket = new WebSocket(`ws://${location.hostname}:8080`)
+socket.onopen = () => socket.send("LAPTOP")
 
 //======//
 // Draw //
