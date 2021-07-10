@@ -854,6 +854,7 @@ const timesLength = times.length
 let previousMouseX = 0
 let previousMouseY = 0
 
+const pixels = new Uint8Array(WORLD_WIDTH * 4)
 const draw = async () => {
 	
 	previousDown = dropperDown
@@ -937,6 +938,10 @@ const draw = async () => {
 			gl.viewport(0, 0, WORLD_WIDTH, WORLD_WIDTH)
 			gl.drawArrays(gl.TRIANGLES, 0, 6)
 		}
+
+		// Export image data?
+		gl.readPixels(0, 0, WORLD_WIDTH, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
 	}
 	
 	// Canvas

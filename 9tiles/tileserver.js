@@ -13,10 +13,11 @@ wss.on("connection", (ws) => {
 
 	ws.on("message", (message) => {
 
-		if (ws === laptop) {
+		if (ws === desktop) {
 			if (message.offer !== undefined) {
-
+				
 			}
+			return
 		}
 
 		if (message === "LAPTOP") {

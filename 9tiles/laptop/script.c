@@ -120,8 +120,8 @@ void updateWorld() {
 		Space *space = &world[id];
 		if (space->element) {
 			if (space->isBottom) {
-				offerSand(space->x);
-				space->isOffered = true;
+				//offerSand(space->x);
+				//space->isOffered = true;
 				continue;
 			}
 			Space *below = space->below;
