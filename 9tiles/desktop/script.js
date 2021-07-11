@@ -939,10 +939,17 @@ const draw = async () => {
 			gl.drawArrays(gl.TRIANGLES, 0, 6)
 		}
 
-		// Export image data?
-		gl.readPixels(0, 0, WORLD_WIDTH, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
 
 	}
+	
+	// Export image data?
+	gl.readPixels(0, 0, WORLD_WIDTH, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+	/*for (let i = 0; i < WORLD_WIDTH * 4; i += 4) {
+		const pixel = pixels[i]
+		if (pixel === 0) continue
+		socket.send(i/4)
+	}*/
+	if (socket.readyState === 1) socket.send(pixels)
 	
 	// Canvas
 	gl.bindFramebuffer(gl.FRAMEBUFFER, null)

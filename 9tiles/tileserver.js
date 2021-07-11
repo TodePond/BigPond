@@ -8,15 +8,40 @@ const LAPTOP_SIZE = 1500
 const DESKTOP_SIZE = 3000
 const PHONE_SIZE = 1500
 
+const desktopOffers = new Uint8Array(DESKTOP_SIZE)
+
+const OFFER_NONE = 0
+const OFFER_READY = 1
+const OFFER_FIRED = 2
+
 const wss = new WebSocketServer(8080);
 wss.on("connection", (ws) => {
 
 	ws.on("message", (message) => {
 
 		if (ws === desktop) {
-			if (message.offer !== undefined) {
-				
+			for (let i = 0; i < DESKTOP_SIZE * 4; i += 4) {
+				const pixel = message[i]
+				const x = i / 4
+				const offer = desktopOffers[x]
+
+				// No sand in this space
+				if (pixel === 0) {
+					if (offer === OFFER_READY) {
+						desktopOffers[x] = OFFER_FIRED
+					}
+				}
+
+				// Yes sand in this space
+				else {
+					if (offer === OFFER_NONE) {
+						desktopOffers[x] = OFFER_READY
+					}
+				}
 			}
+			
+			console.log(desktopOffers)
+			//laptop.send(desktopOffers)
 			return
 		}
 
