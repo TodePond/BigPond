@@ -15,7 +15,7 @@ const EVENT_CHANCE = 0.05
 const EVENTS_NEEDED_FOR_COVERAGE = EVENT_WINDOW == 1? 1 : 1 / EVENT_CHANCE
 
 const EVENTS_PER_FRAME_PARAM = urlParams.get("f")
-const EVENTS_PER_FRAME = EVENTS_PER_FRAME_PARAM !== null? EVENTS_PER_FRAME_PARAM.as(Number) : 6
+const EVENTS_PER_FRAME = EVENTS_PER_FRAME_PARAM !== null? EVENTS_PER_FRAME_PARAM.as(Number) : 24
 const EVENT_CYCLE_COUNT = Math.round(EVENTS_PER_FRAME)
 
 let PAN_POSITION_X = 0
@@ -28,6 +28,11 @@ BG_COLOUR.setRGB(13 / 255, 16 / 255, 23 / 255)
 
 const socket = new WebSocket(`ws://${location.hostname}:8080`)
 socket.onopen = () => socket.send("DESKTOP")
+socket.onmessage = async (message) => {
+	const arrayBuffer = await message.data.arrayBuffer()
+	const array = new Uint8Array(arrayBuffer)
+	//array.d
+}
 
 //======//
 // Menu //
@@ -308,7 +313,9 @@ const fragmentShaderSource = `#version 300 es
 	
 	in vec2 v_TexturePosition;
 	
-	uniform sampler2D u_Texture;
+	uniform sampler2D u_Texture0;
+	uniform sampler2D u_Texture1;
+
 	uniform bool u_isPost;
 	uniform vec2 u_dropperPosition;
 	uniform vec2 u_dropperPreviousPosition;
@@ -406,15 +413,20 @@ const fragmentShaderSource = `#version 300 es
 		float ewX = v_TexturePosition.x + x / ${WORLD_WIDTH}.0;
 		float ewY = v_TexturePosition.y + y / ${WORLD_WIDTH}.0;
 		
-		/*ewX = ewX * ${WORLD_WIDTH * WORLD_WIDTH}.0;
-		ewX = floor(ewX);
-		ewX = ewX / ${WORLD_WIDTH * WORLD_WIDTH}.0;
-		ewX = ewX + 0.5 / ${WORLD_WIDTH * WORLD_WIDTH}.0;
+		vec2 xy = vec2(ewX, ewY);
 		
-		ewY = ewY * ${WORLD_WIDTH * WORLD_WIDTH}.0;
-		ewY = floor(ewY);
-		ewY = ewY / ${WORLD_WIDTH * WORLD_WIDTH}.0;
-		ewY = ewY + 0.5 / ${WORLD_WIDTH * WORLD_WIDTH}.0;*/
+		if (xy.y < 0.0) return VOID;
+		if (xy.y > 1.0) return VOID;
+		if (xy.x < 0.0) return VOID;
+		if (xy.x > 1.0) return VOID;
+		
+		return texture(u_Texture0, xy);
+	}
+	
+	vec4 getColourBottoms(float x, float y) {
+		
+		float ewX = v_TexturePosition.x + x / ${WORLD_WIDTH}.0;
+		float ewY = v_TexturePosition.y + y / ${WORLD_WIDTH}.0;
 		
 		vec2 xy = vec2(ewX, ewY);
 		
@@ -423,7 +435,7 @@ const fragmentShaderSource = `#version 300 es
 		if (xy.x < 0.0) return VOID;
 		if (xy.x > 1.0) return VOID;
 		
-		return texture(u_Texture, xy);
+		return texture(u_Texture1, xy);
 	}
 	
 	uniform bool u_dropperPreviousDown;
@@ -627,6 +639,7 @@ const fragmentShaderSource = `#version 300 es
 					elementBelowRight = SAND;
 				}
 			}
+
 			
 			
 		}
@@ -636,22 +649,28 @@ const fragmentShaderSource = `#version 300 es
 		//================//
 		if (site == ORIGIN) {
 			colour = elementOrigin;
-			return;
 		}
-		if (site == BELOW) {
+		else if (site == BELOW) {
 			colour = elementBelow;
-			return;
 		}
-		if (site == BELOW_RIGHT) {
+		else if (site == BELOW_RIGHT) {
 			colour = elementBelowRight;
-			return;
 		}
-		if (site == BELOW_LEFT) {
+		else if (site == BELOW_LEFT) {
 			colour = elementBelowLeft;
-			return;
+		}
+		else {
+			colour = RED;
 		}
 		
-		colour = RED;
+		vec4 bottomColour = getColourBottoms(0.0, 0.0);
+		vec2 worldpos = world(0.0, 0.0);
+		if (worldpos.y < 0.5 && bottomColour == EMPTY) {
+			colour = EMPTY;
+		}
+		else if (worldpos.y > ${WORLD_WIDTH}.0 - 1.5 && bottomColour == SAND) {
+			colour = SAND;
+		}
 		
 	}
 	
@@ -669,7 +688,7 @@ const fragmentShaderSource = `#version 300 es
 		` : "")()}
 		
 		vec2 targetPos = (v_TexturePosition + u_panPosition) / u_zoom;
-		if (targetPos.x <= 1.0 && targetPos.x >= 0.0 && targetPos.y >= 0.0 && targetPos.y <= 1.0) colour = texture(u_Texture, targetPos);
+		if (targetPos.x <= 1.0 && targetPos.x >= 0.0 && targetPos.y >= 0.0 && targetPos.y <= 1.0) colour = texture(u_Texture0, targetPos);
 		else colour = u_bgColor;
 	}
 	
@@ -692,6 +711,8 @@ const WATER = [0.0, 0.6, 1.0, 1.0]
 const STATIC = [0.5, 0.5, 0.5, 1.0]
 const FORKBOMB = [1.0, 70.0 / 255.0, 70.0 / 255.0, 1.0]
 let DROPPER_ELEMENT = SAND
+
+
 
 /*const menu = makeMenu()
 document.body.appendChild(menu)*/
@@ -762,8 +783,6 @@ gl.bufferData(gl.ARRAY_BUFFER, texturePositionData, gl.STATIC_DRAW)
 gl.enableVertexAttribArray(texturePositionLocation)
 gl.vertexAttribPointer(texturePositionLocation, 2, gl.FLOAT, false, 0, 0)
 
-let texture1 = gl.createTexture()
-gl.bindTexture(gl.TEXTURE_2D, texture1)
 const spaces = new Uint8Array(WORLD_WIDTH * WORLD_WIDTH * 4)
 if (RANDOM_SPAWN !== 0) for (let i = 0; i < spaces.length; i += 4) {
 	if (RANDOM_SPAWN == 1) {
@@ -786,6 +805,45 @@ if (RANDOM_SPAWN !== 0) for (let i = 0; i < spaces.length; i += 4) {
 		spaces[i+3] = 255
 	}
 }
+
+const bottoms = new Uint8Array(WORLD_WIDTH * 2 * 4)
+for (let i = 0; i < bottoms.length; i += 4) {
+	if (i > bottoms.length / 2) {
+		if (Math.random() < 0.02) {
+			bottoms[i] = 255
+			bottoms[i+1] = 204
+			bottoms[i+3] = 255
+		}
+	}
+	else {
+		if (Math.random() < 2.0) {
+			bottoms[i] = 255
+			bottoms[i+1] = 204
+			bottoms[i+3] = 255
+		}
+	}
+}
+
+// BOTTOMS 
+gl.activeTexture(gl.TEXTURE1)
+const tex1Location = gl.getUniformLocation(program, "u_Texture1");
+gl.uniform1i(tex1Location, 1);
+
+const tex1 = gl.createTexture()
+gl.bindTexture(gl.TEXTURE_2D, tex1)
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WORLD_WIDTH, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, bottoms)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+// SPACES
+gl.activeTexture(gl.TEXTURE0)
+const tex0Location = gl.getUniformLocation(program, "u_Texture0");
+gl.uniform1i(tex0Location, 0);
+
+let texture1 = gl.createTexture()
+gl.bindTexture(gl.TEXTURE_2D, texture1)
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WORLD_WIDTH, WORLD_WIDTH, 0, gl.RGBA, gl.UNSIGNED_BYTE, spaces)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
@@ -901,6 +959,12 @@ const draw = async () => {
 	
 	for (let i = 0; i < EVENT_CYCLE_COUNT; i++) {
 	
+		if (i === 0) {
+			gl.activeTexture(gl.TEXTURE1)
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WORLD_WIDTH, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, bottoms)
+			gl.activeTexture(gl.TEXTURE0)
+		}
+
 		seed += SEED_STEP
 		if (seed > 1.0) seed = SEED_STEP
 		gl.uniform1f(seedLocation, seed)
@@ -944,11 +1008,6 @@ const draw = async () => {
 	
 	// Export image data?
 	gl.readPixels(0, 0, WORLD_WIDTH, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-	/*for (let i = 0; i < WORLD_WIDTH * 4; i += 4) {
-		const pixel = pixels[i]
-		if (pixel === 0) continue
-		socket.send(i/4)
-	}*/
 	if (socket.readyState === 1) socket.send(pixels)
 	
 	// Canvas
@@ -962,6 +1021,8 @@ const draw = async () => {
 	if (EVENT_WINDOW) await wait(500)
 	requestAnimationFrame(draw)
 }
+
+
 
 requestAnimationFrame(draw)
 

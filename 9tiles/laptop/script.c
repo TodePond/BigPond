@@ -18,7 +18,6 @@ struct Space {
 	// Used for transmitting sand to next tile
 	int x;
 	bool isBottom;
-	bool isOffered;
 
 	// Used for processing behaviour
 	bool element;
@@ -47,6 +46,19 @@ int getOffsetFromPosition(int x, int y) {
 Space *getSpaceFromPosition(int x, int y) {
 	int id = getIdFromPosition(x, y);
 	return &world[id];
+}
+
+bool getTopElement(int x) {
+	int id = x;
+	Space *space = &world[id];
+	bool element = space->element;
+	return element;
+}
+
+void setTopElement(int x, bool element) {
+	int id = x;
+	Space *space = &world[id];
+	space->element = element;
 }
 
 

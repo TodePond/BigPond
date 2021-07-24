@@ -62,6 +62,45 @@ on.resize(() => {
 const socket = new WebSocket(`ws://${location.hostname}:8080`)
 socket.onopen = () => socket.send("LAPTOP")
 
+const OFFER_NONE = 0
+const OFFER_IN_PROGRESS = 1
+
+const offers = new Uint8Array(3000)
+
+socket.onmessage = async (message) => {
+	const arrayBuffer = await message.data.arrayBuffer()
+	const array = new Uint8Array(arrayBuffer)
+	for (let x = 0; x < WORLD_SIZE; x++) {
+
+		// IF I'M READY TO RECEIVE A NEW OFFER
+		if (offers[x] === OFFER_NONE) {
+			if (array[x] === OFFER_NONE) {
+				// nothing to do here
+			}
+			else if (array[x] === OFFER_IN_PROGRESS) {
+				const topElement = c.getTopElement(x).d9
+				if (topElement === 0) {
+					c.setTopElement(x, true)
+					offers[x] = OFFER_IN_PROGRESS
+				}
+			}
+
+		}
+
+		// IF I'VE JUST PROCESSED AN OFFER
+		else if (offers[x] === OFFER_IN_PROGRESS) {
+			if (array[x] === OFFER_NONE) {
+				// relax again so i can get ready for another offer
+				offers[x] = OFFER_NONE
+			}
+			else if (array[x] === OFFER_IN_PROGRESS) {
+				// nothing to do
+			}
+		}
+
+	}
+}
+
 //======//
 // Draw //
 //======//
@@ -88,121 +127,6 @@ const setPixelTransparency = (x, y, a) => {
 const setPixelIdTransparency = (id, a) => {
 	imageData.data[id] = a
 }
-
-//=======//
-// World //
-//=======//
-/*let directionTick = true
-
-const makeElement = (colour, behave) => ({colour, behave})
-const ELEMENT_EMPTY = makeElement([0, 0, 0, 0])
-const ELEMENT_SAND = makeElement([254, 204, 70, 255], (origin) => {
-	const below = origin.below
-	if (below?.element === ELEMENT_EMPTY) {
-		setSpace(below, ELEMENT_SAND)
-		setSpace(origin, ELEMENT_EMPTY)
-		return
-	}
-	const direction = Random.oneIn(2)
-	if (direction) {
-		const slide = origin.slideRight
-		if (slide?.element === ELEMENT_EMPTY) {
-			setSpace(slide, ELEMENT_SAND)
-			setSpace(origin, ELEMENT_EMPTY)
-		}
-		return
-
-	}
-
-	const slide = origin.slideLeft
-	if (slide?.element === ELEMENT_EMPTY) {
-		setSpace(slide, ELEMENT_SAND)
-		setSpace(origin, ELEMENT_EMPTY)
-		return
-	}
-})*/
-
-/*const setSpace = (space, element) => {
-	space.element = element
-	if (element === ELEMENT_SAND) setPixelIdTransparency(space.id, 255)
-	else setPixelIdTransparency(space.id, 0)
-}
-
-const makeSpace = (x, y) => ({
-	x,
-	y,
-	id: y * WORLD_WIDTH * 4 + x * 4 + 3,
-	element: ELEMENT_EMPTY,
-	below: undefined,
-	slideLeft: undefined,
-	slideRight: undefined
-})*/
-
-/*const world = []
-const worldReversed = []
-const grid = []*/
-
-// Make the grid
-/*for (let x = 0; x < WORLD_WIDTH; x++) {
-	grid.push([])
-	for (let y = 0; y < WORLD_HEIGHT; y++) {
-		const space = makeSpace(x, y)
-		grid[x].push(space)
-		//setPixel(space.x, space.y, 254, 204, 70, 0)
-	}
-
-	for (let y = WORLD_HEIGHT-1; y >= 0; y--) {
-		world.push(grid[x][y])
-	}
-	
-}
-
-for (let x = WORLD_WIDTH-1; x >= 0; x--) {
-	for (let y = WORLD_HEIGHT-1; y >= 0; y--) {
-		worldReversed.push(grid[x][y])
-	}
-	
-}*/
-
-// Make the big space array
-//for (let y = WORLD_HEIGHT-1; y >= 0; y--) {
-/*for (let y = 0; y < WORLD_HEIGHT; y++) {
-	const row = grid[y].clone
-	//if (y % 2 === 0) row.reverse()
-	//const row = grid[y].clone.shuffle()
-	for (let x = 0; x < WORLD_WIDTH; x++) {
-		world.push(row[x])
-	}
-}
-const worldReversed = world.clone.reverse()*/
-
-// Link neighbours
-/*for (let x = 0; x < WORLD_WIDTH; x++) {
-	grid.push([])
-	for (let y = 0; y < WORLD_HEIGHT; y++) {
-		const space = grid[x][y]
-		space.below = grid[x][y+1]
-		space.slideRight = grid[x+1]?.[y+1]
-		space.slideLeft = grid[x-1]?.[y+1]
-	}
-}*/
-
-/*let tickTock = true
-const updateWorld = () => {
-	for (let i = 0; i < SPEED; i++) {
-		if (tickTock) {
-			for (const space of world) {
-				space.element.behave?.(space)
-			}
-		}
-		else {
-			for (const space of worldReversed) {
-				space.element.behave?.(space)
-			}
-		}
-		//tickTock = !tickTock
-	}
-}*/
 
 //=========//
 // Dropper //

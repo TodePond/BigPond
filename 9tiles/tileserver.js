@@ -11,8 +11,7 @@ const PHONE_SIZE = 1500
 const desktopOffers = new Uint8Array(DESKTOP_SIZE)
 
 const OFFER_NONE = 0
-const OFFER_READY = 1
-const OFFER_FIRED = 2
+const OFFER_IN_PROGRESS = 1
 
 const wss = new WebSocketServer(8080);
 wss.on("connection", (ws) => {
@@ -23,32 +22,30 @@ wss.on("connection", (ws) => {
 			for (let i = 0; i < DESKTOP_SIZE * 4; i += 4) {
 				const pixel = message[i]
 				const x = i / 4
-				const offer = desktopOffers[x]
-
-				// No sand in this space
-				if (pixel === 0) {
-					if (offer === OFFER_READY) {
-						desktopOffers[x] = OFFER_FIRED
+				if (desktopOffers[x] === OFFER_NONE) {
+					if (pixel !== 0) {
+						desktopOffers[x] = OFFER_IN_PROGRESS
 					}
 				}
-
-				// Yes sand in this space
-				else {
-					if (offer === OFFER_NONE) {
-						desktopOffers[x] = OFFER_READY
-					}
+				else if (desktopOffers[x] === OFFER_IN_PROGRESS) {
+					
 				}
 			}
 			
-			console.log(desktopOffers)
-			//laptop.send(desktopOffers)
+			if (desktop.state === 1) desktop.send(desktopOffers)
+			//if (laptop.state === 1) laptop.send(desktopOffers)
+			return
+		}
+
+		if (ws === laptop) {
+
 			return
 		}
 
 		if (message === "LAPTOP") {
 			if (laptop) {
 				console.log("%cClosing old laptop connection", "color: rgb(255, 70, 70)")
-				laptop.close()
+				if (laptop.readyState !== 3) laptop.close()
 			}
 			console.log("%cLaptop Connected", "color: rgb(70, 255, 128)")
 			laptop = ws
@@ -58,6 +55,9 @@ wss.on("connection", (ws) => {
 			if (desktop) {
 				console.log("%cClosing old desktop connection", "color: rgb(255, 70, 70)")
 				desktop.close()
+				for (let i = 0; i < desktopOffers.length; i++) {
+					desktopOffers[i] = OFFER_NONE
+				}
 			}
 			console.log("%cDesktop Connected", "color: rgb(70, 255, 128)")
 			desktop = ws
