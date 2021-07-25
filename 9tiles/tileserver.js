@@ -8,7 +8,7 @@ const LAPTOP_SIZE = 1500
 const DESKTOP_SIZE = 3000
 const PHONE_SIZE = 1500
 
-const desktopOffers = new Uint8Array(DESKTOP_SIZE)
+const desktopOffers = new Uint8Array(1500)
 
 const OFFER_NONE = 0
 const OFFER_IN_PROGRESS = 1
@@ -19,21 +19,7 @@ wss.on("connection", (ws) => {
 	ws.on("message", (message) => {
 
 		if (ws === desktop) {
-			for (let i = 0; i < 1500 * 4; i += 4) {
-				const pixel = message[i]
-				const x = i / 4
-				if (desktopOffers[x] === OFFER_NONE) {
-					if (pixel !== 0) {
-						desktopOffers[x] = OFFER_IN_PROGRESS
-					}
-				}
-				else if (desktopOffers[x] === OFFER_IN_PROGRESS) {
-					
-				}
-			}
-			
-			//if (desktop.state === 1) desktop.send(desktopOffers)
-			//if (laptop.state === 1) laptop.send(desktopOffers)
+			if (laptop.state === 1) laptop.send(desktopOffers)
 			return
 		}
 

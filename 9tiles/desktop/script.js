@@ -26,12 +26,13 @@ const BG_COLOUR = new THREE.Color()
 BG_COLOUR.setRGB(13 / 255, 16 / 255, 23 / 255)
 //BG_COLOUR.setHSL(Math.random(), 1, 0.92)
 
+const downOffers = new Uint8Array(1500)
 const socket = new WebSocket(`ws://${location.hostname}:8080`)
 socket.onopen = () => socket.send("DESKTOP")
 socket.onmessage = async (message) => {
 	const arrayBuffer = await message.data.arrayBuffer()
 	const array = new Uint8Array(arrayBuffer)
-	//array.d
+	
 }
 
 //======//
@@ -403,7 +404,7 @@ const fragmentShaderSource = `#version 300 es
 	
 	const vec4 SAND = vec4(1.0, 204.0 / 255.0, 0.0, 1.0);
 	const vec4 EMPTY = vec4(0.0, 0.0, 0.0, 0.0);
-	const vec4 FILLED = vec4(1.0, 1.0, 1.0, 1.0);
+	const vec4 FILLED = vec4(1.0, 0.0, 0.0, 0.0);
 	const vec4 VOID = vec4(1.0, 1.0, 1.0, 0.0);
 	const vec4 WATER = vec4(0.0, 0.6, 1.0, 1.0);
 	const vec4 STATIC = vec4(0.5, 0.5, 0.5, 1.0);
@@ -666,10 +667,10 @@ const fragmentShaderSource = `#version 300 es
 		
 		vec4 bottomColour = getColourBottoms(0.0, 0.0);
 		vec2 worldpos = world(0.0, 0.0);
-		if (worldpos.y <= 0.5 && bottomColour == SAND) {
+		if (worldpos.y <= 0.5 && bottomColour == FILLED) {
 			colour = EMPTY;
 		}
-		else if (worldpos.y > ${WORLD_WIDTH}.0 - 1.5 && bottomColour == SAND) {
+		else if (worldpos.y > ${WORLD_WIDTH}.0 - 1.5 && bottomColour == FILLED) {
 			colour = SAND;
 		}
 		
@@ -1009,9 +1010,15 @@ const draw = async () => {
 	
 	// Export image data?
 	gl.readPixels(750, 0, 1500, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+	bottoms.fill(0)
 	if (socket.readyState === 1) {
-		socket.send(pixels)
-		bottoms.set(pixels, 750 * 4)
+		for (let i = 0; i < downOffers.length; i++) {
+			if (downOffers[i] === 0 && pixels[i*4] === 255) {
+				bottoms[i * 4 + 750*4] = 255
+				downOffers[i] = 1
+			}
+		}
+		socket.send(downOffers)
 	}
 	
 	// Canvas
