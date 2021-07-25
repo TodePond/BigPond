@@ -22,14 +22,14 @@ wss.on("connection", (ws) => {
 		}
 
 		if (ws === laptop) {
-
+			if (desktop.state === 1) desktop.send(message)
 			return
 		}
 
 		if (message === "LAPTOP") {
 			if (laptop) {
 				console.log("%cClosing old laptop connection", "color: rgb(255, 70, 70)")
-				if (laptop.state !== 3) laptop.close()
+				//if (laptop.state !== 3) laptop.close()
 			}
 			console.log("%cLaptop Connected", "color: rgb(70, 255, 128)")
 			laptop = ws
@@ -38,10 +38,7 @@ wss.on("connection", (ws) => {
 		if (message === "DESKTOP") {
 			if (desktop) {
 				console.log("%cClosing old desktop connection", "color: rgb(255, 70, 70)")
-				if (desktop.state !== 3) desktop.close()
-				for (let i = 0; i < desktopOffers.length; i++) {
-					desktopOffers[i] = OFFER_NONE
-				}
+				//if (desktop.state !== 3) desktop.close()
 			}
 			console.log("%cDesktop Connected", "color: rgb(70, 255, 128)")
 			desktop = ws

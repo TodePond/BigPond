@@ -32,7 +32,14 @@ socket.onopen = () => socket.send("DESKTOP")
 socket.onmessage = async (message) => {
 	const arrayBuffer = await message.data.arrayBuffer()
 	const array = new Uint8Array(arrayBuffer)
-	
+	for (let i = 0; i < array.length; i++) {
+		if (array[i] === 0) {
+
+		}
+		else if (array[i] === 1) {
+			if (downOffers[i] === 1) downOffers[i] = 0
+		}
+	}
 }
 
 //======//

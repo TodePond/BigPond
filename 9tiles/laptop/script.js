@@ -65,11 +65,11 @@ socket.onopen = () => socket.send("LAPTOP")
 const OFFER_NONE = 0
 const OFFER_IN_PROGRESS = 1
 
-const offers = new Uint8Array(3000)
+const offers = new Uint8Array(1500)
 
 socket.onmessage = async (message) => {
 	const arrayBuffer = await message.data.arrayBuffer()
-	const array = new Uint8Array(arrayBuffer).d
+	const array = new Uint8Array(arrayBuffer)
 	for (let x = 0; x < WORLD_SIZE; x++) {
 
 		// IF I'M READY TO RECEIVE A NEW OFFER
@@ -99,6 +99,8 @@ socket.onmessage = async (message) => {
 		}
 
 	}
+
+	socket.send(offers)
 }
 
 //======//
