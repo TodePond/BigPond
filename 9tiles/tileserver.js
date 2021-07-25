@@ -8,8 +8,6 @@ const LAPTOP_SIZE = 1500
 const DESKTOP_SIZE = 3000
 const PHONE_SIZE = 1500
 
-const desktopOffers = new Uint8Array(1500)
-
 const OFFER_NONE = 0
 const OFFER_IN_PROGRESS = 1
 
@@ -19,7 +17,7 @@ wss.on("connection", (ws) => {
 	ws.on("message", (message) => {
 
 		if (ws === desktop) {
-			if (laptop.state === 1) laptop.send(desktopOffers)
+			if (laptop.state === 1) laptop.send(message)
 			return
 		}
 
@@ -31,7 +29,7 @@ wss.on("connection", (ws) => {
 		if (message === "LAPTOP") {
 			if (laptop) {
 				console.log("%cClosing old laptop connection", "color: rgb(255, 70, 70)")
-				if (laptop.readyState !== 3) laptop.close()
+				if (laptop.state !== 3) laptop.close()
 			}
 			console.log("%cLaptop Connected", "color: rgb(70, 255, 128)")
 			laptop = ws
@@ -40,7 +38,7 @@ wss.on("connection", (ws) => {
 		if (message === "DESKTOP") {
 			if (desktop) {
 				console.log("%cClosing old desktop connection", "color: rgb(255, 70, 70)")
-				desktop.close()
+				if (desktop.state !== 3) desktop.close()
 				for (let i = 0; i < desktopOffers.length; i++) {
 					desktopOffers[i] = OFFER_NONE
 				}

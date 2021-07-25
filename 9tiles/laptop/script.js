@@ -69,7 +69,7 @@ const offers = new Uint8Array(3000)
 
 socket.onmessage = async (message) => {
 	const arrayBuffer = await message.data.arrayBuffer()
-	const array = new Uint8Array(arrayBuffer)
+	const array = new Uint8Array(arrayBuffer).d
 	for (let x = 0; x < WORLD_SIZE; x++) {
 
 		// IF I'M READY TO RECEIVE A NEW OFFER
