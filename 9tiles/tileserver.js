@@ -19,7 +19,7 @@ wss.on("connection", (ws) => {
 	ws.on("message", (message) => {
 
 		if (ws === desktop) {
-			for (let i = 0; i < DESKTOP_SIZE * 4; i += 4) {
+			for (let i = 0; i < 1500 * 4; i += 4) {
 				const pixel = message[i]
 				const x = i / 4
 				if (desktopOffers[x] === OFFER_NONE) {
@@ -32,7 +32,7 @@ wss.on("connection", (ws) => {
 				}
 			}
 			
-			if (desktop.state === 1) desktop.send(desktopOffers)
+			//if (desktop.state === 1) desktop.send(desktopOffers)
 			//if (laptop.state === 1) laptop.send(desktopOffers)
 			return
 		}

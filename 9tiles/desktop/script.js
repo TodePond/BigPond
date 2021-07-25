@@ -403,6 +403,7 @@ const fragmentShaderSource = `#version 300 es
 	
 	const vec4 SAND = vec4(1.0, 204.0 / 255.0, 0.0, 1.0);
 	const vec4 EMPTY = vec4(0.0, 0.0, 0.0, 0.0);
+	const vec4 FILLED = vec4(1.0, 1.0, 1.0, 1.0);
 	const vec4 VOID = vec4(1.0, 1.0, 1.0, 0.0);
 	const vec4 WATER = vec4(0.0, 0.6, 1.0, 1.0);
 	const vec4 STATIC = vec4(0.5, 0.5, 0.5, 1.0);
@@ -665,7 +666,7 @@ const fragmentShaderSource = `#version 300 es
 		
 		vec4 bottomColour = getColourBottoms(0.0, 0.0);
 		vec2 worldpos = world(0.0, 0.0);
-		if (worldpos.y < 0.5 && bottomColour == EMPTY) {
+		if (worldpos.y <= 0.5 && bottomColour == SAND) {
 			colour = EMPTY;
 		}
 		else if (worldpos.y > ${WORLD_WIDTH}.0 - 1.5 && bottomColour == SAND) {
@@ -808,7 +809,7 @@ if (RANDOM_SPAWN !== 0) for (let i = 0; i < spaces.length; i += 4) {
 
 const bottoms = new Uint8Array(WORLD_WIDTH * 2 * 4)
 for (let i = 0; i < bottoms.length; i += 4) {
-	if (i > bottoms.length / 2) {
+	/*if (i > bottoms.length / 2) {
 		if (Math.random() < 0.02) {
 			bottoms[i] = 255
 			bottoms[i+1] = 204
@@ -821,7 +822,7 @@ for (let i = 0; i < bottoms.length; i += 4) {
 			bottoms[i+1] = 204
 			bottoms[i+3] = 255
 		}
-	}
+	}*/
 }
 
 // BOTTOMS 
@@ -912,7 +913,7 @@ const timesLength = times.length
 let previousMouseX = 0
 let previousMouseY = 0
 
-const pixels = new Uint8Array(WORLD_WIDTH * 4)
+const pixels = new Uint8Array(1500 * 4)
 const draw = async () => {
 	
 	previousDown = dropperDown
@@ -1007,8 +1008,11 @@ const draw = async () => {
 	}
 	
 	// Export image data?
-	gl.readPixels(0, 0, WORLD_WIDTH, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-	if (socket.readyState === 1) socket.send(pixels)
+	gl.readPixels(750, 0, 1500, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+	if (socket.readyState === 1) {
+		socket.send(pixels)
+		bottoms.set(pixels, 750 * 4)
+	}
 	
 	// Canvas
 	gl.bindFramebuffer(gl.FRAMEBUFFER, null)
