@@ -1,5 +1,5 @@
 const urlParams = new URLSearchParams(window.location.search)
-const WORLD_SIZE = urlParams.get("size")?.as(Number) || 2000
+const WORLD_SIZE = urlParams.get("size")?.as(Number) || 1500
 const WORLD_WIDTH = WORLD_SIZE
 const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
@@ -24,10 +24,29 @@ on.load(() => {
 on.resize(() => {
 	canvas.width = WORLD_SIZE
 	canvas.height = WORLD_SIZE
-	//canvas.style["width"] = innerWidth + "px"
-	//canvas.style["height"] = innerHeight + "px"
+	canvas.style["width"] = innerHeight + "px"
+	canvas.style["height"] = innerHeight + "px"
 	drawWorld()
 })
+
+const downOffers = new Uint8Array(1500)
+const socket = new WebSocket(`ws://${location.hostname}:8081`)
+socket.onopen = () => socket.send("PHONE")
+socket.onmessage = async (message) => {
+	let changed = false
+	const arrayBuffer = await message.data.arrayBuffer()
+	const array = new Uint8Array(arrayBuffer)
+	for (let i = 0; i < array.length; i++) {
+		if (array[i] === 0) {
+
+		}
+		else if (array[i] === 1) {
+			downOffers[i] = 0
+			changed = true
+		}
+	}
+	if (changed) socket.send(downOffers)
+}
 
 //======//
 // Draw //
@@ -168,6 +187,19 @@ const updateWorld = () => {
 		}
 		//tickTock = !tickTock
 	}
+
+	if (socket.readyState === 1) {
+		let changed = false
+		for (let i = 0; i < downOffers.length; i++) {
+			const bottomSpace = grid[i][WORLD_HEIGHT-1]
+			if (downOffers[i] === 0 && bottomSpace.element === ELEMENT_SAND) {
+				setSpace(bottomSpace, ELEMENT_EMPTY)
+				downOffers[i] = 1
+				changed = true
+			}
+		}
+		if (changed) socket.send(downOffers)
+	}
 }
 
 //=========//
@@ -194,12 +226,21 @@ const drop = (dx, dy) => {
 	}
 }
 
+canvas.on.touchstart(() => {
+	document.body.requestFullscreen()
+})
+
 on.touchmove(e => e.preventDefault(), {passive: false})
 
 const updateDropper = () => {
 	if (Mouse.Left || Touches.length > 0) {
 		const cursor = Touches.length > 0? Touches[0] : Mouse
-		const [mx, my] = cursor.position
+		const canvasRatio = WORLD_HEIGHT / innerHeight
+		let [mx, my] = cursor.position
+		mx *= canvasRatio
+		my *= canvasRatio
+		mx = Math.round(mx)
+		my = Math.round(my)
 		if (mx >= WORLD_WIDTH || my >= WORLD_HEIGHT || mx < 0 || my < 0) {
 			dropperPreviousPosition = [undefined, undefined]
 			return
@@ -242,7 +283,7 @@ const tick = () => {
 	updateWorld()
 	updateDropper()
 	drawWorld()
-	requestAnimationFrame(tick)
+	setTimeout(tick, 0)
 }
 
 

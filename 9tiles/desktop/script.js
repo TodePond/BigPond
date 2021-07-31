@@ -27,9 +27,10 @@ BG_COLOUR.setRGB(13 / 255, 16 / 255, 23 / 255)
 //BG_COLOUR.setHSL(Math.random(), 1, 0.92)
 
 const downOffers = new Uint8Array(1500)
-const socket = new WebSocket(`ws://${location.hostname}:8080`)
+const socket = new WebSocket(`ws://${location.hostname}:8080`).d
 socket.onopen = () => socket.send("DESKTOP")
 socket.onmessage = async (message) => {
+	let changed = false
 	const arrayBuffer = await message.data.arrayBuffer()
 	const array = new Uint8Array(arrayBuffer)
 	for (let i = 0; i < array.length; i++) {
@@ -37,10 +38,58 @@ socket.onmessage = async (message) => {
 
 		}
 		else if (array[i] === 1) {
-			if (downOffers[i] === 1) downOffers[i] = 0
+			downOffers[i] = 0
+			changed = true
 		}
 	}
+
+	if (changed) socket.send(downOffers)
 }
+
+const upOffers = new Uint8Array(1500)
+const socket2 = new WebSocket(`ws://${location.hostname}:8081`).d
+socket2.onopen = () => socket2.send("DESKTOP")
+socket2.onmessage = async (message) => {
+	const arrayBuffer = await message.data.arrayBuffer()
+	const array = new Uint8Array(arrayBuffer)
+	/*if (pixelsTop.includes(255)) {
+		pixelsTop.forEach((p, i) => {
+			if (p === 255) print(i)
+		})
+	}*/
+	for (let x = 0; x < 1500; x++) {
+
+		// IF I'M READY TO RECEIVE A NEW OFFER
+		if (upOffers[x] === 0) {
+			if (array[x] === 0) {
+				// nothing to do here
+			}
+			else if (array[x] === 1) {
+				const topElement = pixelsTop[x*4]
+				const desired = bottoms[x*4 + 750*4 + WORLD_WIDTH*4]
+				if (topElement === 0 && desired === 0) {
+					bottoms[x*4 + 750*4 + WORLD_WIDTH*4] = 255
+					upOffers[x] = 1
+				}
+			}
+		}
+
+		// IF I'VE JUST PROCESSED AN OFFER
+		else if (upOffers[x] === 1) {
+			if (array[x] === 0) {
+				// relax again so i can get ready for another offer
+				upOffers[x] = 0
+			}
+			else if (array[x] === 1) {
+				// nothing to do
+			}
+		}
+
+	}
+
+	socket2.send(upOffers)
+}
+
 
 //======//
 // Menu //
@@ -922,6 +971,7 @@ let previousMouseX = 0
 let previousMouseY = 0
 
 const pixels = new Uint8Array(1500 * 4)
+const pixelsTop = new Uint8Array(1500 * 4)
 const draw = async () => {
 	
 	previousDown = dropperDown
@@ -972,6 +1022,7 @@ const draw = async () => {
 			gl.activeTexture(gl.TEXTURE1)
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, WORLD_WIDTH, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, bottoms)
 			gl.activeTexture(gl.TEXTURE0)
+			bottoms.fill(0)
 		}
 
 		seed += SEED_STEP
@@ -1015,17 +1066,25 @@ const draw = async () => {
 
 	}
 	
-	// Export image data?
-	gl.readPixels(750, 0, 1500, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-	bottoms.fill(0)
-	if (socket.readyState === 1) {
-		for (let i = 0; i < downOffers.length; i++) {
-			if (downOffers[i] === 0 && pixels[i*4] === 255) {
-				bottoms[i * 4 + 750*4] = 255
-				downOffers[i] = 1
+	
+	if (!paused) {
+		// Export image data?
+		gl.readPixels(750, 0, 1500, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+		gl.readPixels(750, 3000-1, 1500, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelsTop)
+		bottoms.fill(0)
+		if (socket.readyState === 1) {
+			for (let i = 0; i < downOffers.length; i++) {
+				if (downOffers[i] === 0 && pixels[i*4] === 255) {
+					bottoms[i * 4 + 750*4] = 255
+					downOffers[i] = 1
+				}
 			}
+			socket.send(downOffers)
 		}
-		socket.send(downOffers)
+		/*for (let i = 0; i < upOffers.length; i++) {
+			const upOffer = upOffers[i]
+			if (upOffer === 2) upOffers[i] = 1
+		}*/
 	}
 	
 	// Canvas

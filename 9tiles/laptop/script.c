@@ -34,7 +34,7 @@ int getIdFromPosition(int x, int y) {
 	if (y >= WORLD_SIZE) return -1;
 	if (x < 0) return -1;
 	if (y < 0) return -1;
-	int xOffset = y % 2 == 0? x : (WORLD_SIZE - x);
+	int xOffset = y % 2 == 0? x : (WORLD_SIZE-1 - x);
 	return y * WORLD_SIZE + xOffset;
 }
 
