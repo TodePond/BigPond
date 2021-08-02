@@ -3,7 +3,7 @@
 // Setup //
 //=======//
 // These settings must be kept the same as in script.c !!!!!!
-const WORLD_SIZE =  1500
+const WORLD_SIZE =  2000
 const WORLD_WIDTH = WORLD_SIZE
 const WORLD_HEIGHT = WORLD_SIZE
 const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT

@@ -11,7 +11,7 @@ const WORLD_AREA = WORLD_WIDTH * WORLD_HEIGHT
 const canvas = document.createElement("canvas")
 const context = canvas.getContext("2d")
 canvas.style["background-color"] = "rgb(45, 56, 77)"
-canvas.style["image-rendering"] = "pixelated"
+//canvas.style["image-rendering"] = "pixelated"
 
 let c = {}
 let imageData = undefined

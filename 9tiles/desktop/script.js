@@ -52,11 +52,6 @@ socket2.onopen = () => socket2.send("DESKTOP")
 socket2.onmessage = async (message) => {
 	const arrayBuffer = await message.data.arrayBuffer()
 	const array = new Uint8Array(arrayBuffer)
-	/*if (pixelsTop.includes(255)) {
-		pixelsTop.forEach((p, i) => {
-			if (p === 255) print(i)
-		})
-	}*/
 	for (let x = 0; x < 1500; x++) {
 
 		// IF I'M READY TO RECEIVE A NEW OFFER
